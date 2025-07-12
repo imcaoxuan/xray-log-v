@@ -1,0 +1,4 @@
+flask-sqlalchemy
+pymysql
+file-read-backwards
+apscheduler
