@@ -22,16 +22,16 @@ def parse_log(log_entry):
         email = match.group(10) or ''
 
 
-        print(f"date time: {date} {time}")
-        print(f"IP Address: {ip_address}")
-        print(f"Port: {source_port}")
-        print(f"Status: {status}")
-        print(f"Protocol: {protocol}")
-        print(f"Host: {host}")
-        print(f"Target Port: {target_port}")
-        print(f"Inbound: {inbound}")
-        print(f"Outbound: {outbound}")
-        print(f"Email: {email if email else ''}")
+        # print(f"date time: {date} {time}")
+        # print(f"IP Address: {ip_address}")
+        # print(f"Port: {source_port}")
+        # print(f"Status: {status}")
+        # print(f"Protocol: {protocol}")
+        # print(f"Host: {host}")
+        # print(f"Target Port: {target_port}")
+        # print(f"Inbound: {inbound}")
+        # print(f"Outbound: {outbound}")
+        # print(f"Email: {email if email else ''}")
         return date, time, ip_address, source_port, protocol, host, target_port, inbound, outbound, email, ''
     else:
         print("No match found.")

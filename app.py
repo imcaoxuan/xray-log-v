@@ -123,11 +123,11 @@ def dump2mysql():
                         access_list.clear()
                 except Exception as e:
                     print(e)
-                print(f'add last {len(access_list)} records to mysql')
-                db.session.add_all(access_list)
-                db.session.commit()
-                access_list.clear()
-                db.session.close_all()
+            print(f'add last {len(access_list)} records to mysql')
+            db.session.add_all(access_list)
+            db.session.commit()
+            access_list.clear()
+            db.session.close_all()
         print(f"dump2mysql ended at: {time.strftime('%Y-%m-%d %H:%M:%S')}")
 
 
