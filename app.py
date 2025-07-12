@@ -1,4 +1,5 @@
 import os
+import ssl
 import time
 from datetime import datetime, timedelta
 
@@ -35,12 +36,13 @@ print(f"CRON_MIN: {CRON_MIN}")
 print(f"XRAY_ACCESS_LOG: {XRAY_ACCESS_LOG}")
 print(f"BATCH_SIZE: {BATCH_SIZE}")
 
+ssl_context = ssl.create_default_context()
+ssl_context.check_hostname = False
+ssl_context.verify_mode = ssl.CERT_REQUIRED
+ssl_context.load_verify_locations(cafile=MYSQL_SSL_CA)
+
 ssl_args = {
-    "ssl": {
-        "ca": MYSQL_SSL_CA,
-        "cert": MYSQL_SSL_CERT,
-        "key": MYSQL_SSL_KEY
-    }
+    "ssl": ssl_context
 }
 app.config['SQLALCHEMY_DATABASE_URI'] = f'mysql+pymysql://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DB_NAME}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
