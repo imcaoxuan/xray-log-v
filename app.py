@@ -17,6 +17,7 @@ DB_NAME = os.environ['XRAY_LOG_V_DB_NAME']
 CRON_HOUR = os.environ.get('XRAY_LOG_V_CRON_HOUR', 12)
 CRON_MIN = os.environ.get('XRAY_LOG_V_CRON_MIN', 0)
 XRAY_ACCESS_LOG = os.environ.get('XRAY_LOG_V_ACCESS_LOG', '/var/log/xray/access.log')
+BATCH_SIZE = os.environ.get('XRAY_LOG_V_BATCH_SIZE', 100)
 
 print(f"DB_USER: {DB_USER}")
 print(f"DB_PASS: {DB_PASS}")
@@ -73,37 +74,42 @@ def dump2mysql():
         with FileReadBackwards(XRAY_ACCESS_LOG, encoding='utf-8') as frb:
             access_list = []
             for line in frb:
-                access = parse_log(line)
-                if access:
-                    date_, time_, ip_address_, source_port_, protocol_, host_, target_port_, inbound_, outbound_, email_, reason_ = access
-                    if date_ > yesterday_str:
-                        continue
-                    if date_ < yesterday_str:
-                        print('break')
-                        break
-                    access = Access(
-                        date=date_,
-                        time=time_,
-                        address=ip_address_,
-                        source_port=source_port_,
-                        protocol=protocol_,
-                        host=host_,
-                        target_port=target_port_,
-                        inbound=inbound_,
-                        outbound=outbound_,
-                        email=email_,
-                        remarks=reason_
-                    )
-                    access_list.append(access)
-                if len(access_list) == 100:
+                try:
+                    access = parse_log(line)
+                    if access:
+                        date_, time_, ip_address_, source_port_, protocol_, host_, target_port_, inbound_, outbound_, email_, reason_ = access
+                        if date_ > yesterday_str:
+                            continue
+                        if date_ < yesterday_str:
+                            print('break')
+                            break
+                        access = Access(
+                            date=date_,
+                            time=time_,
+                            address=ip_address_,
+                            source_port=source_port_,
+                            protocol=protocol_,
+                            host=host_,
+                            target_port=target_port_,
+                            inbound=inbound_,
+                            outbound=outbound_,
+                            email=email_,
+                            remarks=reason_
+                        )
+                        access_list.append(access)
+                    if len(access_list) == BATCH_SIZE:
+                        db.session.add_all(access_list)
+                        db.session.commit()
+                        print(f'add {len(access_list)} records to mysql')
+                        access_list.clear()
+                except Exception as e:
+                    print(e)
+                finally:
                     db.session.add_all(access_list)
                     db.session.commit()
                     print(f'add {len(access_list)} records to mysql')
                     access_list.clear()
-            db.session.add_all(access_list)
-            db.session.commit()
-            print(f'add {len(access_list)} records to mysql')
-            access_list.clear()
+                    db.session.close_all()
         print(f"dump2mysql ended at: {time.strftime('%Y-%m-%d %H:%M:%S')}")
 
 
