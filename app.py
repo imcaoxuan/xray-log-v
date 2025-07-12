@@ -15,6 +15,15 @@ DB_NAME = os.environ['XRAY_LOG_V_DB_NAME']
 CRON_HOUR = os.environ.get('XRAY_LOG_V_CRON_HOUR', 12)
 CRON_MIN = os.environ.get('XRAY_LOG_V_CRON_MIN', 0)
 
+print(f"DB_USER: {DB_USER}")
+print(f"DB_PASS: {DB_PASS}")
+print(f"DB_HOST: {DB_HOST}")
+print(f"DB_PORT: {DB_PORT}")
+print(f"DB_NAME: {DB_NAME}")
+print(f"CRON_HOUR: {CRON_HOUR}")
+print(f"CRON_MIN: {CRON_MIN}")
+
+
 app.config['SQLALCHEMY_DATABASE_URI'] = f'mysql+pymysql://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DB_NAME}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
