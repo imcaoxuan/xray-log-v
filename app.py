@@ -76,6 +76,8 @@ def dump2mysql():
                 access = parse_log(line)
                 if access:
                     date_, time_, ip_address_, source_port_, protocol_, host_, target_port_, inbound_, outbound_, email_, reason_ = access
+                    if date_ > yesterday_str:
+                        continue
                     if date_ < yesterday_str:
                         print('break')
                         break
