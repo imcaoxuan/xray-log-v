@@ -14,6 +14,9 @@ DB_PASS = os.environ['XRAY_LOG_V_DB_PASS']
 DB_HOST = os.environ['XRAY_LOG_V_DB_HOST']
 DB_PORT = os.environ['XRAY_LOG_V_DB_PORT']
 DB_NAME = os.environ['XRAY_LOG_V_DB_NAME']
+MYSQL_SSL_CA = os.environ['XRAY_LOG_V_DB_CA']
+MYSQL_SSL_CERT = os.environ['XRAY_LOG_V_DB_CERT']
+MYSQL_SSL_KEY = os.environ['XRAY_LOG_V_DB_KEY']
 CRON_HOUR = os.environ.get('XRAY_LOG_V_CRON_HOUR', 12)
 CRON_MIN = os.environ.get('XRAY_LOG_V_CRON_MIN', 0)
 XRAY_ACCESS_LOG = os.environ.get('XRAY_LOG_V_ACCESS_LOG', '/var/log/xray/access.log')
@@ -24,12 +27,24 @@ print(f"DB_PASS: {DB_PASS}")
 print(f"DB_HOST: {DB_HOST}")
 print(f"DB_PORT: {DB_PORT}")
 print(f"DB_NAME: {DB_NAME}")
+print(f"MYSQL_SSL_CA: {MYSQL_SSL_CA}")
 print(f"CRON_HOUR: {CRON_HOUR}")
 print(f"CRON_MIN: {CRON_MIN}")
+print(f"XRAY_ACCESS_LOG: {XRAY_ACCESS_LOG}")
+print(f"BATCH_SIZE: {BATCH_SIZE}")
 
-
+ssl_args = {
+    "ssl": {
+        "ca": MYSQL_SSL_CA,
+        "cert": MYSQL_SSL_CERT,
+        "key": MYSQL_SSL_KEY
+    }
+}
 app.config['SQLALCHEMY_DATABASE_URI'] = f'mysql+pymysql://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DB_NAME}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+    'connect_args': ssl_args
+}
 db = SQLAlchemy(app)
 
 
