@@ -18,6 +18,7 @@ DB_PASS = os.environ['XRAY_LOG_V_DB_PASS']
 DB_HOST = os.environ['XRAY_LOG_V_DB_HOST']
 DB_PORT = os.environ['XRAY_LOG_V_DB_PORT']
 DB_NAME = os.environ['XRAY_LOG_V_DB_NAME']
+NODE_NAME = os.environ.get('XRAY_LOG_V_NODE_NAME', os.uname().nodename)
 MYSQL_SSL_CA = os.environ.get('XRAY_LOG_V_DB_CA', './ca.pem')
 MYSQL_SSL_CERT = os.environ.get('XRAY_LOG_V_DB_CERT', './client-cert.pem')
 MYSQL_SSL_KEY = os.environ.get('XRAY_LOG_V_DB_KEY', './client-key.pem')
@@ -70,6 +71,7 @@ class Access(db.Model):
         server_default=db.func.current_timestamp(),
         onupdate=db.func.current_timestamp()
     )
+    node_name = db.Column(db.String(255), nullable=False)
     date = db.Column(db.String(255), nullable=False)
     time = db.Column(db.String(255), nullable=False)
     address = db.Column(db.String(255), nullable=False)
@@ -107,6 +109,7 @@ def dump2mysql(from_datetime=datetime.now() - timedelta(days=1), to_datetime=dat
                             print('break')
                             break
                         access = Access(
+                            node_name=NODE_NAME,
                             date=date_,
                             time=time_,
                             address=ip_address_,
@@ -119,7 +122,7 @@ def dump2mysql(from_datetime=datetime.now() - timedelta(days=1), to_datetime=dat
                             email=email_,
                             remarks=reason_
                         )
-                        access_list.append(access)
+                        access_list.insert(0, access)
                     if len(access_list) >= BATCH_SIZE:
                         print(f'add {len(access_list)} records to mysql')
                         db.session.add_all(access_list)
