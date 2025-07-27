@@ -24,7 +24,7 @@ MYSQL_SSL_KEY = os.environ.get('XRAY_LOG_V_DB_KEY', './client-key.pem')
 CRON_HOUR = os.environ.get('XRAY_LOG_V_CRON_HOUR', 12)
 CRON_MIN = os.environ.get('XRAY_LOG_V_CRON_MIN', 0)
 XRAY_ACCESS_LOG = os.environ.get('XRAY_LOG_V_ACCESS_LOG', '/var/log/xray/access.log')
-BATCH_SIZE = os.environ.get('XRAY_LOG_V_BATCH_SIZE', 100)
+BATCH_SIZE = int(os.environ.get('XRAY_LOG_V_BATCH_SIZE', 100))
 
 print(f"DB_USER: {DB_USER}")
 print(f"DB_PASS: {DB_PASS}")
