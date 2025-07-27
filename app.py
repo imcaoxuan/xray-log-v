@@ -120,7 +120,7 @@ def dump2mysql(from_datetime=datetime.now() - timedelta(days=1), to_datetime=dat
                             remarks=reason_
                         )
                         access_list.append(access)
-                    if len(access_list) == BATCH_SIZE:
+                    if len(access_list) >= BATCH_SIZE:
                         print(f'add {len(access_list)} records to mysql')
                         db.session.add_all(access_list)
                         db.session.commit()
