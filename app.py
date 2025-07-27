@@ -1,12 +1,15 @@
+import calendar
 import os
 import ssl
 import time
-from datetime import datetime, timedelta
+from datetime import date, datetime
+from datetime import timedelta
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from file_read_backwards import FileReadBackwards
-from flask import Flask
+from flask import Flask, request
 from flask_sqlalchemy import SQLAlchemy
+
 from log_util import parse_log
 
 app = Flask(__name__)
@@ -15,9 +18,9 @@ DB_PASS = os.environ['XRAY_LOG_V_DB_PASS']
 DB_HOST = os.environ['XRAY_LOG_V_DB_HOST']
 DB_PORT = os.environ['XRAY_LOG_V_DB_PORT']
 DB_NAME = os.environ['XRAY_LOG_V_DB_NAME']
-MYSQL_SSL_CA = os.environ['XRAY_LOG_V_DB_CA']
-MYSQL_SSL_CERT = os.environ['XRAY_LOG_V_DB_CERT']
-MYSQL_SSL_KEY = os.environ['XRAY_LOG_V_DB_KEY']
+MYSQL_SSL_CA = os.environ.get('XRAY_LOG_V_DB_CA', './ca.pem')
+MYSQL_SSL_CERT = os.environ.get('XRAY_LOG_V_DB_CERT', './client-cert.pem')
+MYSQL_SSL_KEY = os.environ.get('XRAY_LOG_V_DB_KEY', './client-key.pem')
 CRON_HOUR = os.environ.get('XRAY_LOG_V_CRON_HOUR', 12)
 CRON_MIN = os.environ.get('XRAY_LOG_V_CRON_MIN', 0)
 XRAY_ACCESS_LOG = os.environ.get('XRAY_LOG_V_ACCESS_LOG', '/var/log/xray/access.log')
@@ -53,7 +56,6 @@ db = SQLAlchemy(app)
 
 
 class Access(db.Model):
-
     __tablename__ = 'access'
 
     id = db.Column(db.Integer(), primary_key=True, autoincrement=True)
@@ -84,22 +86,24 @@ class Access(db.Model):
         return f"<Access {self.id}>"
 
 
-def dump2mysql():
-    yesterday = datetime.now() - timedelta(days=1)
-    yesterday_str = yesterday.strftime('%Y/%m/%d')
-    print(f"dump for: {yesterday_str}")
+def dump2mysql(from_datetime=datetime.now() - timedelta(days=1), to_datetime=datetime.now() - timedelta(days=1), log_file=None):
+    # yesterday = datetime.now() - timedelta(days=1)
+    # yesterday_str = yesterday.strftime('%Y/%m/%d')
+    from_ = from_datetime.strftime('%Y/%m/%d')
+    to_ = to_datetime.strftime('%Y/%m/%d')
+    print(f"dump for: {from_}~{to_}")
     with app.app_context():
         print(f"dump2mysql started at: {time.strftime('%Y-%m-%d %H:%M:%S')}")
-        with FileReadBackwards(XRAY_ACCESS_LOG, encoding='utf-8') as frb:
+        with FileReadBackwards(log_file or XRAY_ACCESS_LOG, encoding='utf-8') as frb:
             access_list = []
             for line in frb:
                 try:
                     access = parse_log(line)
                     if access:
                         date_, time_, ip_address_, source_port_, protocol_, host_, target_port_, inbound_, outbound_, email_, reason_ = access
-                        if date_ > yesterday_str:
+                        if date_ > to_:
                             continue
-                        if date_ < yesterday_str:
+                        if date_ < from_:
                             print('break')
                             break
                         access = Access(
@@ -140,7 +144,17 @@ scheduler.start()
 
 @app.route('/')
 def hello_world():  # put application's code here
-    return 'Hello World!'
+    return datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+
+@app.post('/dump')
+def dump():
+    request_body = request.json
+    from_datetime = datetime.fromtimestamp(request_body.get('from', calendar.timegm(date.today().timetuple())))
+    to_datetime = datetime.fromtimestamp(request_body.get('to', time.time()))
+    log_file = request_body.get('log_file', None)
+    dump2mysql(from_datetime=from_datetime, to_datetime=to_datetime, log_file=log_file)
+    return {'message': f'dump {from_datetime}~{to_datetime}' + log_file if log_file else ''}
 
 
 if __name__ == '__main__':
